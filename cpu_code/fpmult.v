@@ -3,8 +3,8 @@ module fpmult (
     input wire [31:0] dataA, dataB,
     input wire pushNewMult,
 
-    output wire [31:0] dataOut,
-    output wire busy, done
+    output reg [31:0] dataOut,
+    output reg busy, done
 );
     reg [31:0] dataASave, dataBSave;
     reg [2:0] state;
@@ -20,7 +20,7 @@ module fpmult (
     wire [7:0] expFinal;
 
     assign signA = dataASave[31];
-    assign signB = databSave[31];
+    assign signB = dataBSave[31];
 
     assign expA = dataASave[30:23];
     assign expB = dataBSave[30:23];

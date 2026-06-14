@@ -16,8 +16,8 @@ module fpToInt (
     assign expIn = dataIn[30:23];
     assign mantissaIn = {1'b1, dataIn[22:0]};
 
-    assign exceptionRaised = (x>158);
-    assign isAnsZero = (x<127);
+    assign exceptionRaised = (expIn>158);
+    assign isAnsZero = (expIn<127);
 
     assign expMinus127 = expIn - 127;
     assign shiftAmt = expMinus127[4:0];
