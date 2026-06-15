@@ -1,43 +1,50 @@
-module reg_file (
-    input wire [4:0] Rs1, Rs2, Rd,
-    input wire float,
-    input wire [31:0] dataIn,
-    input wire RegWrite,
-    input wire clk,
-    input wire reset,
-    input wire [3:0] next_tag,
-    input wire isRdRelevant,
+module reg_file #(
+    parameter REORDER_TAG_BITS = 3
+) (
+    input wire clk, reset,
 
-    output wire [31:0] data_Rs1, data_Rs2,
+    input wire [4:0] rs1, rs2, rdDecode,
+    input wire floatDecode,
+    input wire regWriteDecode,
+    input wire fetchNext,
+    input wire [REORDER_TAG_BITS-1:0] nextTag,
+    output wire [31:0] dataRs1, dataRs2,
+    output wire [REORDER_TAG_BITS-1:0] tag1, tag2,
     output wire available1, available2,
-    output wire [3:0] tag1, tag2
+
+    input wire [4:0] rdROB,
+    input wire floatROB,
+    input wire regWriteROB,
+    input wire wBNext,
+    input wire [31:0] dataInROB
 );
-    reg [36:0] regfile [0:63];
-    //Make a diff file for tag
-    // 1 bit valid, 32 bit data, 4 bit tag
-    //reading must occur on the negative edge henceforth (or on the second +ve edge, meaning it is an FSM then)
-    assign {available1, data_Rs1, tag1} = regfile[Rs1];
-    assign {available2, data_Rs2, tag2} = regfile[Rs2];
+    reg [31:0] regFile [0:63];
+    reg [63:0] valid;
+    reg [REORDER_TAG_BITS-1:0] tag;
+
+    assign dataRs1 = regFile[{floatDecode, rs1}];
+    assign available1 = valid[{floatDecode, rs1}];
+    assign tag1 = tag[{floatDecode, rs1}];
+    assign dataRs2 = regFile[{floatDecode, rs2}];
+    assign available2 = valid[{floatDecode, rs2}];
+    assign tag2 = tag[{floatDecode, rs2}];
 
     integer i;
     always @(posedge clk or posedge reset) begin
         if (reset) begin
-            for (i = 0; i<64; i++) begin
-                regfile[i] <= 32'd0;
-            end
-        end
-        else begin
-            if (RegWrite) begin
-                regfile[Rd] = {1'd1, dataIn, 4'd15};
+            regFile <= 0;
+            valid <= 1;
+        end else begin
+            if (regWriteROB) begin
+                regFile[rdROB] <= dataInROB;
+                valid[rdROB] <= 1;
             end
         end
     end
-    always @(negedge clk) begin
-        if (isRdRelevant) begin
-            //outside this, we will communicate to ROB via this isRdRelevant signal only
-            //upon the posedge, ROB will make this the next value in itself
-            //in the ROB, the instruction sent will act as the ROB's fillup for now
-            regfile[Rd] <= next_tag;
+    always @(posedge clk) begin
+        if (regWriteDecode) begin
+            tag[rdDecode] <= nextTag;
+            valid[rdDecode] <= 0;
         end
     end
 endmodule

@@ -1,5 +1,4 @@
 module instr_cache (
-    input wire clk,
     input wire [31:0] instruction_address,
     output wire [31:0] instruction
 );

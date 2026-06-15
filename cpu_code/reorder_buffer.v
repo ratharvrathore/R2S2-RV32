@@ -22,6 +22,7 @@ module reorder_buffer #(
     output reg [31:0] dataOutReg,
     output reg [4:0] rdOut,
     output reg regWrEn,
+    output reg wBNext,
     output wire [REORDER_TAG_BITS - 1 : 0] broadcastNextTag,
 
     output wire [31:0] dataOutA, dataOutB,
@@ -148,6 +149,7 @@ module reorder_buffer #(
         case (stateWB)
             IDLE : begin
                 regWrEn <= 0;
+                wBNext <= 0;
                 if (valid[old] == 1) begin
                     stateWB <= POP_DATA;
                 end
@@ -155,6 +157,7 @@ module reorder_buffer #(
             POP_DATA : begin
                 dataOutReg <= data[old];
                 rdOut <= rd[old];
+                wBNext <= 1;
                 regWrEn <= typeOfIns[old][1];
                 old <= old + 1;
                 valid[old] <= 0;
